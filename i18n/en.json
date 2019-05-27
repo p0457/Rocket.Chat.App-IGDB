@@ -1,0 +1,10 @@
+{
+  "customize_name": "Customize Name",
+  "customize_name_description": "Choose the username that this app will post as.",
+  "customize_icon": "Customize Icon",
+  "customize_icon_description": "Choose the icon that is used for messages from this app.",
+  "customize_key": "Set API Key",
+  "customize_key_description": "Obtain an API Key from https://api.igdb.com",
+  "slashcommand_params": "help",
+  "slashcommand_description": "Shows all IGDB App commands"
+}
