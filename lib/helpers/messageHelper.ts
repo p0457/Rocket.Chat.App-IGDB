@@ -60,27 +60,59 @@ export async function sendBadApiKey(read: IRead, modify: IModify, user: IUser, r
   }, read, modify, user, room);
 }
 
-export function prepMetaDisplay(result, fields, scope, title, simple?: boolean) {
+export function prepMetaDisplay(result, fields, scope, title, options?) {
   if (result[scope]) {
     let text = '';
-    result[scope].forEach((resultItem) => {
-      text += resultItem.name;
-      if (resultItem.url) {
-        text += ' (' + resultItem.url + ')';
-      }
-      text += ', ';
-    });
-    text = text.substring(0, text.length - 2); // Remove last ', '
-    if (!simple) {
-      fields.push({
-        title,
-        value: text,
+    if (Array.isArray(result[scope])) { // Assume array of objects
+      result[scope].forEach((resultItem) => {
+        if (typeof resultItem === 'string' || !isNaN(result[scope])) { // Assumed simple string
+          text += resultItem;
+        } else { // Assumed object
+          text += resultItem.name;
+          if (resultItem.comment && (!options || !options.comment)) {
+            text += ' _(' + resultItem.comment + ')_';
+          }
+          if (resultItem.url && (!options || !options.url)) {
+            if (resultItem.url.indexOf('_') !== -1) {
+              text += ' (' + resultItem.url + ')';
+            } else {
+              text += ' _(' + resultItem.url + ')_';
+            }
+          }
+          if (options && options.list === true) {
+            text += ' \n';
+          } else {
+            text += ', ';
+          }
+        }
       });
-      return;
-    } else {
-      text = '\n*' + title + ': *' + text;
-      return text;
+      if (text.endsWith(', ')) {
+        text = text.substring(0, text.length - 2); // Remove last ', '
+      } else if (text.endsWith('\n')) {
+        text = text.substring(0, text.length - 1); // Remove last '\n'
+      }
+    } else if (typeof result[scope] === 'string' || !isNaN(result[scope])) { // Assumed simple string
+      text += result[scope];
+    } else { // Assumbed single object
+      if (result[scope].name) {
+        text += result[scope].name;
+      }
+      if (result[scope].comment && (!options || !options.comment)) {
+        text += ' _(' + result[scope].comment + ')_ ';
+      }
+      if (result[scope].url && (!options || !options.url)) {
+        if (result[scope].url.indexOf('_') !== -1) {
+          text += ' (' + result[scope].url + ') ';
+        } else {
+          text += ' _(' + result[scope].url + ')_ ';
+        }
+      }
     }
+    fields.push({
+      short: (options && options.short === false) ? false : true,
+      title,
+      value: text,
+    });
   } else {
     return;
   }
@@ -107,39 +139,41 @@ export async function sendGamesResults(results, read: IRead, modify: IModify, us
 
     const fields = new Array();
 
-    text += '*Id: *' + result.id;
+    prepMetaDisplay(result, fields, 'id', 'Id', { url: false });
 
     if (result.slug) {
-      text += '\n*Slug: *' + result.slug;
-    }
-    if (result.alternativeNamesDisplay) {
-      text += '\n*Alternative Names: *';
-      result.alternativeNamesDisplay.forEach((alternativeName) => {
-        text += alternativeName.name + ' (' + alternativeName.comment + '), ';
-      });
-      text = text.substring(0, text.length - 2); // Remove last ', '
+      prepMetaDisplay(result, fields, 'slug', 'Slug', { url: false });
     }
 
+    prepMetaDisplay(result, fields, 'franchisesDisplay', 'Franchise(s)');
+    prepMetaDisplay(result, fields, 'genresDisplay', 'Genres', { list: true });
+    prepMetaDisplay(result, fields, 'gameModesDisplay', 'Game Modes', { list: true });
+    prepMetaDisplay(result, fields, 'playerPerspectivesDisplay', 'Player Perspectives', { list: true });
+
+    prepMetaDisplay(result, fields, 'alternativeNamesDisplay', 'Alternative Names', { url: false, short: false, list: true });
+    prepMetaDisplay(result, fields, 'themesDisplay', 'Themes', { short: false });
+    prepMetaDisplay(result, fields, 'gameEnginesDisplay', 'Game Engines', { short: false });
+    prepMetaDisplay(result, fields, 'companiesDisplay', 'Companies', { short: false, list: true });
+    prepMetaDisplay(result, fields, 'platformsDisplay', 'Platforms', { short: false, list: true });
+    prepMetaDisplay(result, fields, 'keywordsDisplay', 'Keywords', { url: false, short: false });
+
     if (result.rating && result.rating_count) {
-      let ratingText = '\n*Rating: *' + result.rating + ' (of ' + result.rating_count + ') ';
+      let ratingText = '\n*Rating: *' + result.rating + ' _(of ' + result.rating_count + ')_ ';
       if (result.aggregated_rating && result.aggregated_rating_count) {
-        ratingText += '*Aggregate: *' + result.aggregated_rating + ' (of ' + result.aggregated_rating_count + ') ';
+        ratingText += '*Aggregate: *' + result.aggregated_rating + ' _(of ' + result.aggregated_rating_count + ')_ ';
       }
       if (result.total_rating && result.total_rating_count) {
-        ratingText += '*Total: *' + result.total_rating + ' (of ' + result.total_rating_count + ') ';
+        ratingText += '*Total: *' + result.total_rating + ' _(of ' + result.total_rating_count + ')_ ';
       }
       text += ratingText;
     }
-
-    text += prepMetaDisplay(result, fields, 'gameEnginesDisplay', 'Game Engines', true);
-    text += prepMetaDisplay(result, fields, 'companiesDisplay', 'Companies', true);
 
     if (result.releaseDatesDisplay) {
       text += '\n*Release Dates: *\n';
       result.releaseDatesDisplay.forEach((releaseDate) => {
         text += '--';
         if (releaseDate.platformDisplay) {
-          text += releaseDate.platformDisplay + ': ';
+          text += '*' + releaseDate.platformDisplay + ': *';
         }
         text += releaseDate.human + '\n';
       });
@@ -147,15 +181,8 @@ export async function sendGamesResults(results, read: IRead, modify: IModify, us
     }
 
     if (result.summary) {
-      text += '\n*Summary: *' + result.summary + '\n';
+      text += '\n\n*Summary: *' + result.summary + '\n';
     }
-
-    prepMetaDisplay(result, fields, 'franchisesDisplay', 'Franchise(s)');
-    prepMetaDisplay(result, fields, 'platformsDisplay', 'Platforms');
-    prepMetaDisplay(result, fields, 'genresDisplay', 'Genres');
-    prepMetaDisplay(result, fields, 'gameModesDisplay', 'Game Modes');
-    prepMetaDisplay(result, fields, 'themesDisplay', 'Themes');
-    prepMetaDisplay(result, fields, 'playerPerspectivesDisplay', 'Player Perspectives');
 
     if (result.websitesDisplay) {
       let websitesText = '';

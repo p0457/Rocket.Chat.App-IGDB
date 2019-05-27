@@ -41,10 +41,8 @@ export async function getMetadata(searchResults, key: string, scope: string, res
           if (ids[j + y]) {
             tempIds[y] = ids[j + y];
           }
-          console.log('****tempIds[y]', tempIds[y]);
         }
 
-        console.log('****tempIds', tempIds);
         const response = await http.post('https://api-v3.igdb.com/' + scope, setRequest(key, fields + ';where id=(' + tempIds.join(',') + ');'));
         let responseResult = new Array();
         if (response && response.content) {
@@ -58,7 +56,6 @@ export async function getMetadata(searchResults, key: string, scope: string, res
                 metaForGame.push(result);
               }
             });
-            console.log('****9' + scope, metaForGame, responseResult);
             if (metaForGame) {
               searchResult[resultProperty] = metaForGame;
             }
@@ -152,29 +149,26 @@ export async function getGames(key, query, options, http: IHttp, read: IRead, mo
         if (options.getAlternativeNames) {
           await getMetadata(searchResults, key, 'alternative_names', 'alternative_names', 'alternativeNamesDisplay', http, 'name,comment');
         }
+        if (options.getKeywords) {
+          await getMetadata(searchResults, key, 'keywords', 'keywords', 'keywordsDisplay', http);
+        }
         if (options.getReleaseDates) {
           await getMetadata(searchResults, key, 'release_dates', 'release_dates', 'releaseDatesDisplay', http, 'platform,human');
 
-          // TODO: Fix this mess and make sure it works
-
-          /* try {
-            console.log('****1', searchResults);
+          try {
             let releaseDates = new Array();
             searchResults.forEach((searchResult) => {
               releaseDates = releaseDates.concat(searchResult.releaseDatesDisplay);
             });
             releaseDates = [...new Set(releaseDates)]; // Make unique
-            console.log('****2', releaseDates);
             const releaseDatePlatforms = new Array();
             releaseDates.forEach((releaseDate) => {
               releaseDatePlatforms.push(releaseDate.platform);
             });
-            console.log('****3', releaseDatePlatforms);
             let maxIterations = 1;
             if (releaseDatePlatforms.length > 10) {
               maxIterations = Math.floor(releaseDatePlatforms.length / 10);
             }
-            console.log('****iterations', maxIterations, releaseDatePlatforms.length);
             for (let x = 0; x < maxIterations; x++) {
               const j = (10 * x); // 0, 10, 20, ...
               const releaseDatePlatformsTemp = new Array();
@@ -182,7 +176,6 @@ export async function getGames(key, query, options, http: IHttp, read: IRead, mo
                 if (releaseDatePlatforms[j + y]) {
                   releaseDatePlatformsTemp[y] = releaseDatePlatforms[j + y];
                 }
-                console.log('****releaseDatePlatformsTemp[y]', releaseDatePlatformsTemp[y]);
               }
 
               // tslint:disable-next-line:max-line-length
@@ -192,13 +185,12 @@ export async function getGames(key, query, options, http: IHttp, read: IRead, mo
               if (platformsResponse && platformsResponse.content) {
                 platformsResponseResult = JSON.parse(platformsResponse.content);
               }
-              console.log('****4', platformsResponseResult);
               searchResults.forEach(async (searchResult) => {
                 try {
                   searchResult.releaseDatesDisplay.forEach((releaseDate) => {
                     platformsResponseResult.forEach((platformResponseResult) => {
                       if (platformResponseResult.id === releaseDate.platform) {
-                        releaseDate.platformDisplay = releaseDate.platform;
+                        releaseDate.platformDisplay = platformResponseResult.name;
                       }
                     });
                   });
@@ -209,7 +201,7 @@ export async function getGames(key, query, options, http: IHttp, read: IRead, mo
             }
           } catch (e) {
             console.log('Failed to get release date platform for one or more games', e);
-          } */
+          }
         }
       }
       await sendGamesResults(searchResults, read, modify, user, room);
@@ -222,7 +214,7 @@ export async function getGames(key, query, options, http: IHttp, read: IRead, mo
       collapsed: false,
       color: '#e10000',
       title: {
-        value: 'Failed parse response!',
+        value: 'Failed to parse response!',
       },
       text: 'Please try again.',
     }, read, modify, user, room);

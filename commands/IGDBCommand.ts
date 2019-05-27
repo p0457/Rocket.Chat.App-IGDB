@@ -2,9 +2,7 @@ import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/de
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
 import { IGDBApp } from '../IGDBApp';
 import * as msgHelper from '../lib/helpers/messageHelper';
-import { sendGamesResults, sendNotificationSingleAttachment } from '../lib/helpers/messageHelper';
 import { getGames, setRequest } from '../lib/helpers/request';
-import { AppPersistence } from '../lib/persistence';
 
 enum Command {
   Help = 'help',
@@ -90,7 +88,7 @@ export class IGDBCommand implements ISlashCommand {
       return;
     }
 
-    const [, id] = context.getArguments();
+    const [, id, scope] = context.getArguments();
     if (!id) {
       await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG]`', read, modify, context.getSender(), context.getRoom());
       return;
@@ -103,6 +101,23 @@ export class IGDBCommand implements ISlashCommand {
       query += 'slug="' + id + '";';
     } else {
       query += 'id=' + id + ';';
+    }
+
+    if (scope) {
+      const scopeTemp = scope.toLowerCase().trim();
+      if (scopeTemp === 'artworks') {
+        // TODO:
+      } else if (scopeTemp === 'bundles') {
+        // TODO:
+      } else if (scopeTemp === 'expansions') {
+        // TODO:
+      } else if (scopeTemp === 'screenshots') {
+        // TODO:
+      } else if (scopeTemp === 'similar') {
+        // TODO:
+      } else if (scopeTemp === 'videos') {
+        // TODO:
+      }
     }
 
     await getGames(key, query, {
@@ -118,6 +133,7 @@ export class IGDBCommand implements ISlashCommand {
       getFranchises: true,
       getAlternativeNames: true,
       getReleaseDates: true,
+      getKeywords: true,
     }, http, read, modify, context.getSender(), context.getRoom());
   }
 }
