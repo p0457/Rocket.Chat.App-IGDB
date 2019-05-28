@@ -180,6 +180,7 @@ export class IGDBCommand implements ISlashCommand {
         getReleaseDates: true,
         getKeywords: true,
         getMultiplayerModes: true,
+        getTimeToBeat: true,
       }, http, read, modify, context.getSender(), context.getRoom());
     }
   }

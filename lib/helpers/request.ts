@@ -14,7 +14,7 @@ export function setRequest(key, query) {
   };
 }
 
-export async function getMetadata(searchResults, key: string, scope: string, resultField: string, resultProperty: string, http: IHttp, fieldsOverride?) {
+export async function getMetadata(searchResults, key: string, scope: string, resultField: string, resultProperty: string, http: IHttp, fieldsOverride?, filterOverride?) {
   let ids = new Array();
   searchResults.forEach(async (searchResult) => {
     if (searchResult[resultField]) {
@@ -42,7 +42,11 @@ export async function getMetadata(searchResults, key: string, scope: string, res
           }
         }
 
-        const response = await http.post('https://api-v3.igdb.com/' + scope, setRequest(key, fields + ';where id=(' + tempIds.join(',') + ');'));
+        let filter = 'id';
+        if (filterOverride) {
+          filter = filterOverride;
+        }
+        const response = await http.post('https://api-v3.igdb.com/' + scope, setRequest(key, fields + ';where ' + filter + '=(' + tempIds.join(',') + ');'));
         let responseResult = new Array();
         if (response && response.content) {
           responseResult = JSON.parse(response.content);
@@ -216,7 +220,7 @@ export async function getGames(key: string, query: string, options, http: IHttp,
               });
             }
           } catch (e) {
-            console.log('Failed to get metadata for multiple games', e);
+            console.log('Failed to get covers for multiple games', e);
           }
         }
         // PLATFORMS
@@ -700,6 +704,57 @@ export async function getGames(key: string, query: string, options, http: IHttp,
               searchResult.pulsesDisplay = pulsesForGame;
             }
           });
+        }
+        // TIMES TO BEAT
+        if (options.getTimeToBeat) {
+          try {
+            let maxIterations = 1;
+            if (ids.length > 10) {
+              maxIterations = Math.floor(ids.length / 10);
+            }
+            for (let x = 0; x < maxIterations; x++) { // For each iteration
+              const j = (10 * x); // 0, 10, 20, ...
+              const tempIds = new Array(); // Holds ids in iteration, max of 10
+              for (let y = 0; y < 9; y++) {
+                if (ids[j + y]) {
+                  tempIds[y] = ids[j + y];
+                }
+              }
+
+              // tslint:disable-next-line:max-line-length
+              const timeToBeatResponse = await http.post('https://api-v3.igdb.com/time_to_beats', setRequest(key, 'fields *;where game=(' + tempIds.join(',') + ');'));
+              let timeToBeatResponseResult = new Array();
+              if (timeToBeatResponse && timeToBeatResponse.content) {
+                timeToBeatResponseResult = JSON.parse(timeToBeatResponse.content);
+              }
+
+              console.log('****timeToBeatResponseResult', timeToBeatResponseResult);
+              if (timeToBeatResponseResult && Array.isArray(timeToBeatResponseResult) && timeToBeatResponseResult.length > 0) {
+                searchResults.forEach(async (searchResult) => {
+                  try {
+                    const timeToBeatForGame = timeToBeatResponseResult.filter((timeToBeat) => {
+                      return timeToBeat.game === searchResult.id;
+                    });
+                    if (timeToBeatForGame) {
+                      timeToBeatForGame.forEach((timeToBeat) => {
+                        if (timeToBeat.normally && !isNaN(timeToBeat.normally)) {
+                          timeToBeat.normallyDisplay = (timeToBeat.normally / 60 / 60).toFixed(1); // Seconds to hours
+                        }
+                        if (timeToBeat.hastly && !isNaN(timeToBeat.hastly)) {
+                          timeToBeat.hastlyDisplay = (timeToBeat.hastly / 60 / 60).toFixed(1); // Seconds to hours
+                        }
+                      });
+                      searchResult.timeToBeatDisplay = timeToBeatForGame;
+                    }
+                  } catch (e) {
+                    console.log('Failed to get times to beat for game id ' + searchResult.id, e);
+                  }
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Failed to get times to beat for multiple games', e);
+          }
         }
       }
       await sendGamesResults(searchResults, {

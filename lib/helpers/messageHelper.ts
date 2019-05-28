@@ -142,6 +142,23 @@ export function prepMetaDisplay(result, fields, scope, title, options?) {
             text = text.substring(0, text.length - 2); // Remove last ', '
           }
           text += '\n'; // To split for each platform
+        } else if (options && options.timeToBeat) {
+          if (resultItem.normallyDisplay) {
+            text += '*Normally *' + resultItem.normallyDisplay + ' hours';
+            if (options && options.list === true) {
+              text += ' \n';
+            } else {
+              text += ', ';
+            }
+          }
+          if (resultItem.hastlyDisplay) {
+            text += '*Hastily *' + resultItem.hastlyDisplay + ' hours';
+            if (options && options.list === true) {
+              text += ' \n';
+            } else {
+              text += ', ';
+            }
+          }
         } else {
           if (typeof resultItem === 'string' || !isNaN(result[scope])) { // Assumed simple string
             text += resultItem;
@@ -240,7 +257,8 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
     prepMetaDisplay(result, fields, 'gameModesDisplay', 'Game Modes', { list: true });
     prepMetaDisplay(result, fields, 'multiplayerModesDisplay', 'Multiplayer Modes', { list: false, multiplayerModes: true });
     prepMetaDisplay(result, fields, 'playerPerspectivesDisplay', 'Player Perspectives', { list: true });
-
+    console.log('****timetobeatdisplay', result.timeToBeatDisplay);
+    prepMetaDisplay(result, fields, 'timeToBeatDisplay', 'Time to Beat', { url: false, short: false, list: false, timeToBeat: true });
     prepMetaDisplay(result, fields, 'alternativeNamesDisplay', 'Alternative Names', { url: false, short: false, list: true });
     prepMetaDisplay(result, fields, 'themesDisplay', 'Themes', { short: false });
     prepMetaDisplay(result, fields, 'gameEnginesDisplay', 'Game Engines', { short: false });
