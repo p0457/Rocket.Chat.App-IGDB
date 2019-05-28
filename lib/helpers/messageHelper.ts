@@ -311,6 +311,30 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       } else {
         text += '0';
       }
+
+      if (result.feedsDisplay) {
+        text += '\n*Feeds: *';
+        if (result.feedsDisplay && Array.isArray(result.feedsDisplay)) {
+          text += result.feedsDisplay.length;
+          if (result.feedsDisplay.length > 0) {
+            text += ' _(to see results, run `/igdb game ' + result.id + ' feeds` or `/igdb game ' + result.slug + ' feeds`)_';
+          }
+        } else {
+          text += '0';
+        }
+      }
+
+      if (result.pulsesDisplay) {
+        text += '\n*Pulses: *';
+        if (result.pulsesDisplay && Array.isArray(result.pulsesDisplay)) {
+          text += result.pulsesDisplay.length;
+          if (result.pulsesDisplay.length > 0) {
+            text += ' _(to see results, run `/igdb game ' + result.id + ' pulses` or `/igdb game ' + result.slug + ' pulses`)_';
+          }
+        } else {
+          text += '0';
+        }
+      }
     }
 
     if (result.summary) {
@@ -489,6 +513,73 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
             thumbnailUrl: dlc.thumbUrl,
             text: 'DLC for *' + result.name + '* \n*Id: *' + dlc.id + '\n*Slug: *' + dlc.slug
             + '\n\nTo view details, run `/igdb game ' + dlc.id + '` or `/igdb game ' + dlc.slug + '`',
+          });
+        });
+      }
+    }
+
+    if (result.feedsDisplay) {
+      if (result.feedsDisplay.length === 0) {
+        attachments.push({
+          collapsed: false,
+          color: '#e10000',
+          title: {
+            value: 'No Feeds found for game ' + result.name + '!',
+          },
+        });
+      } else {
+        attachments.push({
+          collapsed: false,
+          color: '#00CE00',
+          title: {
+            value: 'Feed Results (' + result.feedsDisplay.length + ')',
+          },
+        });
+        result.feedsDisplay.forEach((feed) => {
+          attachments.push({
+            collapsed: false,
+            color: '##3eb87a',
+            title: {
+              value: feed.name,
+              link: feed.url,
+            },
+            text: '*Category: *' + feed.categoryDisplay + '\n*Updated: *' + feed.updatedDateDisplay + '\n*Content: *' + feed.content,
+          });
+        });
+      }
+    }
+
+    if (result.pulsesDisplay) {
+      if (result.pulsesDisplay.length === 0) {
+        attachments.push({
+          collapsed: false,
+          color: '#e10000',
+          title: {
+            value: 'No Pulses found for game ' + result.name + '!',
+          },
+        });
+      } else {
+        attachments.push({
+          collapsed: false,
+          color: '#00CE00',
+          title: {
+            value: 'Pulse Results (' + result.pulsesDisplay.length + ')',
+          },
+        });
+        result.pulsesDisplay.forEach((pulse) => {
+          attachments.push({
+            collapsed: false,
+            color: '##3eb87a',
+            title: {
+              value: pulse.title,
+              link: pulse.urlDisplay ? pulse.urlDisplay.url : '',
+            },
+            thumbnailUrl: pulse.image,
+            text:
+              '*Source: *' + (pulse.sourceDisplay ? pulse.sourceDisplay.name : '') +
+              '\n*Updated: *' + pulse.updatedDateDisplay +
+              '\n*Author: *' + pulse.author +
+              '\n\n*Summary: *' + pulse.summary,
           });
         });
       }

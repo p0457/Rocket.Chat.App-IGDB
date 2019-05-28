@@ -437,6 +437,270 @@ export async function getGames(key: string, query: string, options, http: IHttp,
             console.log('Failed to get videos for one or more games', e);
           }
         }
+        // FEEDS
+        if (options.getFeeds) {
+          const daysBack = 60;
+          const earliest = new Date();
+          earliest.setDate(earliest.getDate() - daysBack);
+          const earliestSinceEpoch = ((earliest.getTime() - earliest.getMilliseconds()) / 1000);
+
+          try {
+            let maxIterations = 1;
+            if (ids.length > 10) {
+              maxIterations = Math.floor(ids.length / 10);
+            }
+            for (let x = 0; x < maxIterations; x++) { // For each iteration
+              const j = (10 * x); // 0, 10, 20, ...
+              const tempIds = new Array(); // Holds ids in iteration, max of 10
+              for (let y = 0; y < 9; y++) {
+                if (ids[j + y]) {
+                  tempIds[y] = ids[j + y];
+                }
+              }
+
+              // tslint:disable-next-line:max-line-length
+              const feedsResponse = await http.post('https://api-v3.igdb.com/feeds', setRequest(key, 'fields *;where games=(' + ids.join(',') + ') & updated_at > ' + earliestSinceEpoch + ';'));
+              let feedsResponseResult = new Array();
+              if (feedsResponse && feedsResponse.content) {
+                feedsResponseResult = JSON.parse(feedsResponse.content);
+              }
+
+              if (feedsResponseResult && Array.isArray(feedsResponseResult)) {
+                searchResults.forEach(async (searchResult) => {
+                  try {
+                    const feedsForGame = feedsResponseResult.filter((feed) => {
+                      if (feed.games && Array.isArray(feed.games)) {
+                        return feed.games.includes(searchResult.id);
+                      } else {
+                        return false;
+                      }
+                    });
+                    if (feedsForGame) {
+                      feedsForGame.forEach((feed) => {
+                        let categoryDisplay = '';
+                        if (feed.category === 1) {
+                          categoryDisplay = 'Pulse Article';
+                        } else if (feed.category === 2) {
+                          categoryDisplay = 'Coming Soon';
+                        } else if (feed.category === 3) {
+                          categoryDisplay = 'New Trailer';
+                        } else if (feed.category === 5) {
+                          categoryDisplay = 'User Contributed Item';
+                        } else if (feed.category === 6) {
+                          categoryDisplay = 'User Contributions Item';
+                        } else if (feed.category === 7) {
+                          categoryDisplay = 'Page Contributed Item';
+                        }
+                        feed.categoryDisplay = categoryDisplay;
+                        // Set date time in readable format
+                        const readableUpdatedDate = new Date(0); // The 0 there is the key, which sets the date to the epoch
+                        readableUpdatedDate.setUTCSeconds(feed.updated_at);
+                        feed.updatedDateDisplay = readableUpdatedDate;
+                      });
+                      feedsForGame.sort((feed) => {
+                        return feed.updated_at;
+                      });
+                      searchResult.feedsDisplay = feedsForGame;
+                    }
+                  } catch (e) {
+                    console.log('Failed to get feeds for game id ' + searchResult.id, e);
+                  }
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Failed to get feeds for multiple games', e);
+          }
+        }
+        // PULSES
+        if (options.getPulses) {
+          const daysBack = 60;
+          const earliest = new Date();
+          earliest.setDate(earliest.getDate() - daysBack);
+          const earliestSinceEpoch = ((earliest.getTime() - earliest.getMilliseconds()) / 1000);
+
+          // First get pulse groups
+          let pulseIds = new Array();
+          let pulseGroups = new Array();
+          try {
+            let maxIterations = 1;
+            if (ids.length > 10) {
+              maxIterations = Math.floor(ids.length / 10);
+            }
+            for (let x = 0; x < maxIterations; x++) { // For each iteration
+              const j = (10 * x); // 0, 10, 20, ...
+              const tempIds = new Array(); // Holds ids in iteration, max of 10
+              for (let y = 0; y < 9; y++) {
+                if (ids[j + y]) {
+                  tempIds[y] = ids[j + y];
+                }
+              }
+
+              // tslint:disable-next-line:max-line-length
+              const pulseGroupsResponse = await http.post('https://api-v3.igdb.com/pulse_groups', setRequest(key, 'fields *;where game=(' + ids.join(',') + ') & updated_at > ' + earliestSinceEpoch + ';'));
+              let pulseGroupsResponseResult = new Array();
+              if (pulseGroupsResponse && pulseGroupsResponse.content) {
+                pulseGroupsResponseResult = JSON.parse(pulseGroupsResponse.content);
+              }
+
+              if (pulseGroupsResponseResult && Array.isArray(pulseGroupsResponseResult) && pulseGroupsResponseResult.length > 0) {
+                pulseGroupsResponseResult.forEach((pulseGroup) => {
+                  pulseIds = pulseIds.concat(pulseGroup.pulses);
+                  pulseGroups = pulseGroups.concat(pulseGroup);
+                });
+              }
+            }
+          } catch (e) {
+            console.log('Failed to get pulse groups for multiple games', e);
+          }
+          pulseIds = [...new Set(pulseIds)]; // Make unique
+          pulseGroups = [...new Set(pulseGroups)]; // Make unique
+
+          // Now to get the pulses
+          let pulses = new Array();
+          try {
+            let maxIterations = 1;
+            if (pulseIds.length > 10) {
+              maxIterations = Math.floor(pulseIds.length / 10);
+            }
+            for (let x = 0; x < maxIterations; x++) { // For each iteration
+              const j = (10 * x); // 0, 10, 20, ...
+              const tempIds = new Array(); // Holds ids in iteration, max of 10
+              for (let y = 0; y < 9; y++) {
+                if (pulseIds[j + y]) {
+                  tempIds[y] = pulseIds[j + y];
+                }
+              }
+
+              if (tempIds.length > 0) {
+                // tslint:disable-next-line:max-line-length
+                const pulsesResponse = await http.post('https://api-v3.igdb.com/pulses', setRequest(key, 'fields *;where id=(' + tempIds.join(',') + ');'));
+                let pulsesResponseResult = new Array();
+                if (pulsesResponse && pulsesResponse.content) {
+                  pulsesResponseResult = JSON.parse(pulsesResponse.content);
+                }
+
+                if (pulsesResponseResult && Array.isArray(pulsesResponseResult) && pulsesResponseResult.length > 0) {
+                  pulsesResponseResult.forEach((pulse) => {
+                    const pulseGroupGameForPulse = pulseGroups.find((pulseGroup) => {
+                      return pulseGroup.pulses.includes(pulse.id);
+                    });
+                    pulse.group = pulseGroupGameForPulse;
+                    pulses.push(pulse);
+                  });
+                }
+
+                pulses = pulses.concat(pulsesResponseResult);
+              }
+            }
+          } catch (e) {
+            console.log('Failed to get pulses for multiple games', e);
+          }
+          pulses = [...new Set(pulses)]; // Make unique
+
+          // Now to get pulse url
+          const pulseUrlIds = pulses.map((pulse) => {
+            return pulse.website;
+          });
+          try {
+            let maxIterations = 1;
+            if (pulseUrlIds.length > 10) {
+              maxIterations = Math.floor(pulseUrlIds.length / 10);
+            }
+            for (let x = 0; x < maxIterations; x++) { // For each iteration
+              const j = (10 * x); // 0, 10, 20, ...
+              const tempIds = new Array(); // Holds ids in iteration, max of 10
+              for (let y = 0; y < 9; y++) {
+                if (pulseUrlIds[j + y]) {
+                  tempIds[y] = pulseUrlIds[j + y];
+                }
+              }
+
+              if (tempIds.length > 0) {
+                // tslint:disable-next-line:max-line-length
+                const pulsesUrlResponse = await http.post('https://api-v3.igdb.com/pulse_urls', setRequest(key, 'fields *;where id=(' + tempIds.join(',') + ');'));
+                let pulsesUrlResponseResult = new Array();
+                if (pulsesUrlResponse && pulsesUrlResponse.content) {
+                  pulsesUrlResponseResult = JSON.parse(pulsesUrlResponse.content);
+                }
+
+                if (pulsesUrlResponseResult && Array.isArray(pulsesUrlResponseResult) && pulsesUrlResponseResult.length > 0) {
+                  pulses.forEach((pulse) => {
+                    const pulseUrlForPulse = pulsesUrlResponseResult.find((pulseUrl) => {
+                      return pulseUrl.id === pulse.website;
+                    });
+                    if (pulseUrlForPulse) {
+                      pulse.urlDisplay = pulseUrlForPulse;
+                    }
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.log('Failed to get pulse urls for multiple games', e);
+          }
+
+          // Now to get pulse source
+          const pulseSourceIds = pulses.map((pulse) => {
+            return pulse.pulse_source;
+          });
+          try {
+            let maxIterations = 1;
+            if (pulseSourceIds.length > 10) {
+              maxIterations = Math.floor(pulseSourceIds.length / 10);
+            }
+            for (let x = 0; x < maxIterations; x++) { // For each iteration
+              const j = (10 * x); // 0, 10, 20, ...
+              const tempIds = new Array(); // Holds ids in iteration, max of 10
+              for (let y = 0; y < 9; y++) {
+                if (pulseSourceIds[j + y]) {
+                  tempIds[y] = pulseSourceIds[j + y];
+                }
+              }
+
+              if (tempIds.length > 0) {
+                // tslint:disable-next-line:max-line-length
+                const pulsesSourceResponse = await http.post('https://api-v3.igdb.com/pulse_sources', setRequest(key, 'fields *;where id=(' + tempIds.join(',') + ');'));
+                let pulsesSourceResponseResult = new Array();
+                if (pulsesSourceResponse && pulsesSourceResponse.content) {
+                  pulsesSourceResponseResult = JSON.parse(pulsesSourceResponse.content);
+                }
+
+                if (pulsesSourceResponseResult && Array.isArray(pulsesSourceResponseResult) && pulsesSourceResponseResult.length > 0) {
+                  pulses.forEach((pulse) => {
+                    const pulseSourceForPulse = pulsesSourceResponseResult.find((pulseSource) => {
+                      return pulseSource.id === pulse.pulse_source;
+                    });
+                    if (pulseSourceForPulse) {
+                      pulse.sourceDisplay = pulseSourceForPulse;
+                    }
+                  });
+                }
+              }
+            }
+          } catch (e) {
+            console.log('Failed to get pulse sources for multiple games', e);
+          }
+
+          pulses.forEach((pulse) => {
+            // Set date time in readable format
+            const readableUpdatedDate = new Date(0); // The 0 there is the key, which sets the date to the epoch
+            readableUpdatedDate.setUTCSeconds(pulse.updated_at);
+            pulse.updatedDateDisplay = readableUpdatedDate;
+          });
+
+          searchResults.forEach((searchResult) => {
+            const pulsesForGame = pulses.filter((pulse) => {
+              return pulse.group.game === searchResult.id;
+            });
+            pulsesForGame.sort((pulse) => {
+              return pulse.updated_at;
+            });
+            if (pulsesForGame) {
+              searchResult.pulsesDisplay = pulsesForGame;
+            }
+          });
+        }
       }
       await sendGamesResults(searchResults, {
         simple: options.simple,

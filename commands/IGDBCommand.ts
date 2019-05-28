@@ -46,7 +46,7 @@ export class IGDBCommand implements ISlashCommand {
       },
       text: '`/igdb help`\n>Show this help menu\n'
         + '`/igdb games [QUERY]`\n>Search for games\n'
-        + '`/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos)`\n>Get details for a game',
+        + '`/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`\n>Get details for a game',
       }, read, modify, context.getSender(), context.getRoom());
     return;
   }
@@ -98,7 +98,7 @@ export class IGDBCommand implements ISlashCommand {
     const [, id, scope] = context.getArguments();
     if (!id) {
       // tslint:disable-next-line:max-line-length
-      await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos)`', read, modify, context.getSender(), context.getRoom());
+      await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`', read, modify, context.getSender(), context.getRoom());
       return;
     }
 
@@ -149,9 +149,19 @@ export class IGDBCommand implements ISlashCommand {
           getCovers,
           getDlcs: true,
         }, http, read, modify, context.getSender(), context.getRoom());
+      } else if (scopeTemp === 'feeds') {
+        await getGames(key, query, {
+          getCovers,
+          getFeeds: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
+      } else if (scopeTemp === 'pulses') {
+        await getGames(key, query, {
+          getCovers,
+          getPulses: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
       } else {
         // tslint:disable-next-line:max-line-length
-        await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos)`', read, modify, context.getSender(), context.getRoom());
+        await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`', read, modify, context.getSender(), context.getRoom());
         return;
       }
     } else {
