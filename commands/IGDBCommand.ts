@@ -74,9 +74,16 @@ export class IGDBCommand implements ISlashCommand {
       return;
     }
 
-    const query = 'search "' + searchArg + '";fields name,slug,summary;where version_parent = null;';
+    if (searchArg.length < 3) {
+      await msgHelper.sendNotification('Search Query must be greater than 3 letters!', read, modify, context.getSender(), context.getRoom());
+      return;
+    }
+
+    const query = 'search "' + searchArg + '";fields name,slug,summary,url;where version_parent = null;limit 50;';
 
     await getGames(key, query, {
+      simple: true,
+      resultsText: 'Results for query "' + searchArg + '"',
       getCovers: true,
     }, http, read, modify, context.getSender(), context.getRoom());
   }
@@ -90,7 +97,8 @@ export class IGDBCommand implements ISlashCommand {
 
     const [, id, scope] = context.getArguments();
     if (!id) {
-      await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG]`', read, modify, context.getSender(), context.getRoom());
+      // tslint:disable-next-line:max-line-length
+      await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos)`', read, modify, context.getSender(), context.getRoom());
       return;
     }
 
@@ -103,37 +111,66 @@ export class IGDBCommand implements ISlashCommand {
       query += 'id=' + id + ';';
     }
 
+    const getCovers = true;
     if (scope) {
       const scopeTemp = scope.toLowerCase().trim();
       if (scopeTemp === 'artworks') {
-        // TODO:
+        await getGames(key, query, {
+          getCovers,
+          getArtworks: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'bundles') {
-        // TODO:
+        await getGames(key, query, {
+          getCovers,
+          getBundles: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'expansions') {
-        // TODO:
+        await getGames(key, query, {
+          getCovers,
+          getExpansions: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'screenshots') {
-        // TODO:
+        await getGames(key, query, {
+          getCovers,
+          getScreenshots: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'similar') {
-        // TODO:
+        await getGames(key, query, {
+          getCovers,
+          getSimilar: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'videos') {
-        // TODO:
+        await getGames(key, query, {
+          getCovers,
+          getVideos: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
+      } else if (scopeTemp === 'dlc') {
+        await getGames(key, query, {
+          getCovers,
+          getDlcs: true,
+        }, http, read, modify, context.getSender(), context.getRoom());
+      } else {
+        // tslint:disable-next-line:max-line-length
+        await msgHelper.sendNotification('Usage: `/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos)`', read, modify, context.getSender(), context.getRoom());
+        return;
       }
+    } else {
+      await getGames(key, query, {
+        getCovers,
+        getPlatforms: true,
+        getGenres: true,
+        getGameModes: true,
+        getCompanies: true,
+        getGameEngines: true,
+        getPlayerPerspectives: true,
+        getThemes: true,
+        getWebsites: true,
+        getFranchises: true,
+        getAlternativeNames: true,
+        getReleaseDates: true,
+        getKeywords: true,
+        getMultiplayerModes: true,
+      }, http, read, modify, context.getSender(), context.getRoom());
     }
-
-    await getGames(key, query, {
-      getCovers: true,
-      getPlatforms: true,
-      getGenres: true,
-      getGameModes: true,
-      getCompanies: true,
-      getGameEngines: true,
-      getPlayerPerspectives: true,
-      getThemes: true,
-      getWebsites: true,
-      getFranchises: true,
-      getAlternativeNames: true,
-      getReleaseDates: true,
-      getKeywords: true,
-    }, http, read, modify, context.getSender(), context.getRoom());
   }
 }
