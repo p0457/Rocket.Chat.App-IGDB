@@ -46,7 +46,7 @@ export class IGDBCommand implements ISlashCommand {
       },
       text: '`/igdb help`\n>Show this help menu\n'
         + '`/igdb games [QUERY]`\n>Search for games\n'
-        + '`\igdb game [ID OR SLUG]`\n>Get details for a game',
+        + '`/igdb game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos)`\n>Get details for a game',
       }, read, modify, context.getSender(), context.getRoom());
     return;
   }
