@@ -1,6 +1,6 @@
 {
     "id": "d604010b-40fa-472f-9ea9-dd0c44ee9c85",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "requiredApiVersion": "^1.4.0",
     "iconFile": "icon.png",
     "author": {
@@ -11,5 +11,5 @@
     "name": "IGDB",
     "nameSlug": "igdb",
     "classFile": "IGDBApp.ts",
-    "description": "Interact with the IGDB API."
+    "description": "Interact with the IGDB API (https://api-docs.igdb.com)"
 }
