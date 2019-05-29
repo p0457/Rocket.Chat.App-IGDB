@@ -728,7 +728,6 @@ export async function getGames(key: string, query: string, options, http: IHttp,
                 timeToBeatResponseResult = JSON.parse(timeToBeatResponse.content);
               }
 
-              console.log('****timeToBeatResponseResult', timeToBeatResponseResult);
               if (timeToBeatResponseResult && Array.isArray(timeToBeatResponseResult) && timeToBeatResponseResult.length > 0) {
                 searchResults.forEach(async (searchResult) => {
                   try {

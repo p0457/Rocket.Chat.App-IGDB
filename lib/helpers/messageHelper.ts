@@ -246,6 +246,14 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
 
     const fields = new Array();
 
+    // For multiple results, a search is being performed. Show the quick command to use for convenience
+    if (results.length > 1) {
+      text += 'To get the full details of this item, run `/igdb game ' + result.id + '`';
+      if (result.slug) {
+        text += ' or `/igdb game ' + result.slug + '`';
+      }
+    }
+
     prepMetaDisplay(result, fields, 'id', 'Id', { url: false });
 
     if (result.slug) {
@@ -257,7 +265,6 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
     prepMetaDisplay(result, fields, 'gameModesDisplay', 'Game Modes', { list: true });
     prepMetaDisplay(result, fields, 'multiplayerModesDisplay', 'Multiplayer Modes', { list: false, multiplayerModes: true });
     prepMetaDisplay(result, fields, 'playerPerspectivesDisplay', 'Player Perspectives', { list: true });
-    console.log('****timetobeatdisplay', result.timeToBeatDisplay);
     prepMetaDisplay(result, fields, 'timeToBeatDisplay', 'Time to Beat', { url: false, short: false, list: false, timeToBeat: true });
     prepMetaDisplay(result, fields, 'alternativeNamesDisplay', 'Alternative Names', { url: false, short: false, list: true });
     prepMetaDisplay(result, fields, 'themesDisplay', 'Themes', { short: false });
@@ -355,6 +362,11 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       }
     }
 
+    // If only one result, show other commands
+    if (results.length === 1) {
+      text += '\n*Other Commands: *`(artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`';
+    }
+
     if (result.summary) {
       if (text.length > 0) {
         text += '\n\n';
@@ -426,8 +438,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         attachments.push({
           collapsed: false,
           color: '##3eb87a',
-          imageUrl: 'Can\'t embed this video!\n' + video.url,
-          text: 'Video for ' + result.name,
+          text: 'Video for ' + result.name + ' ...(can\'t embed!) ' + video.url,
         });
       });
     }
