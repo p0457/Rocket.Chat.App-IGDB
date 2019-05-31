@@ -1,5 +1,5 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IMessageAction, IMessageAttachment, MessageActionType, MessageProcessingType, MessageActionButtonsAlignment } from '@rocket.chat/apps-engine/definition/messages';
+import { IMessageAction, IMessageAttachment, MessageActionButtonsAlignment, MessageActionType, MessageProcessingType } from '@rocket.chat/apps-engine/definition/messages';
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import { AppPersistence } from '../persistence';
@@ -254,7 +254,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
     if (results.length > 1) {
       actions.push({
         type: MessageActionType.BUTTON,
-        text: 'View Details',
+        text: 'Get Details',
         msg: '/igdb game ' + result.id,
         msg_in_chat_window: true,
         msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -307,7 +307,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       if (result.similar_games && Array.isArray(result.similar_games)) {
         actions.push({
           type: MessageActionType.BUTTON,
-          text: 'View Similar Games (' + result.similar_games.length + ')',
+          text: 'Get Similar Games (' + result.similar_games.length + ')',
           msg: '/igdb game ' + result.id + ' similar',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -317,7 +317,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       if (result.bundles && Array.isArray(result.bundles)) {
         actions.push({
           type: MessageActionType.BUTTON,
-          text: 'View Bundles (' + result.bundles.length + ')',
+          text: 'Get Bundles (' + result.bundles.length + ')',
           msg: '/igdb game ' + result.id + ' bundles',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -327,7 +327,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       if (result.expansions && Array.isArray(result.expansions)) {
         actions.push({
           type: MessageActionType.BUTTON,
-          text: 'View Expansions (' + result.expansions.length + ')',
+          text: 'Get Expansions (' + result.expansions.length + ')',
           msg: '/igdb game ' + result.id + ' expansions',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -337,7 +337,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       if (result.dlc && Array.isArray(result.dlc)) {
         actions.push({
           type: MessageActionType.BUTTON,
-          text: 'View DLC (' + result.dlc.length + ')',
+          text: 'Get DLC (' + result.dlc.length + ')',
           msg: '/igdb game ' + result.id + ' dlc',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -347,7 +347,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       if (result.feedsDisplay && Array.isArray(result.feedsDisplay)) {
         actions.push({
           type: MessageActionType.BUTTON,
-          text: 'View Feeds (' + result.feedsDisplay.length + ')',
+          text: 'Get Feeds (' + result.feedsDisplay.length + ')',
           msg: '/igdb game ' + result.id + ' feeds',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -357,7 +357,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       if (result.pulsesDisplay && Array.isArray(result.pulsesDisplay)) {
         actions.push({
           type: MessageActionType.BUTTON,
-          text: 'View Pulses (' + result.pulsesDisplay.length + ')',
+          text: 'Get Pulses (' + result.pulsesDisplay.length + ')',
           msg: '/igdb game ' + result.id + ' pulses',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -373,7 +373,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         const display = otherCommands[y].charAt(0).toUpperCase() + otherCommands[y].slice(1);
         actions.push({
           type: MessageActionType.BUTTON,
-          text: 'View ' + display,
+          text: 'Get ' + display,
           msg: '/igdb game ' + result.id + ' ' + otherCommands[y],
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -512,7 +512,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
           const bundlesActions = new Array<IMessageAction>();
           bundlesActions.push({
             type: MessageActionType.BUTTON,
-            text: 'View Details',
+            text: 'Get Details',
             msg: '/igdb game ' + bundle.id,
             msg_in_chat_window: true,
             msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -547,7 +547,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
           const expansionsActions = new Array<IMessageAction>();
           expansionsActions.push({
             type: MessageActionType.BUTTON,
-            text: 'View Details',
+            text: 'Get Details',
             msg: '/igdb game ' + expansion.id,
             msg_in_chat_window: true,
             msg_processing_type: MessageProcessingType.RespondWithMessage,
@@ -582,7 +582,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
           const dlcActions = new Array<IMessageAction>();
           dlcActions.push({
             type: MessageActionType.BUTTON,
-            text: 'View Details',
+            text: 'Get Details',
             msg: '/igdb game ' + dlc.id,
             msg_in_chat_window: true,
             msg_processing_type: MessageProcessingType.RespondWithMessage,
