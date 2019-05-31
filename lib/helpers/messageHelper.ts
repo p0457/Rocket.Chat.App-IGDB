@@ -1,5 +1,5 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IMessageAction, IMessageAttachment, MessageActionType, MessageProcessingType } from '@rocket.chat/apps-engine/definition/messages';
+import { IMessageAction, IMessageAttachment, MessageActionType, MessageProcessingType, MessageActionButtonsAlignment } from '@rocket.chat/apps-engine/definition/messages';
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import { AppPersistence } from '../persistence';
@@ -426,6 +426,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       },
       thumbnailUrl: result.thumbUrl,
       actions,
+      actionButtonsAlignment: MessageActionButtonsAlignment.HORIZONTAL,
       fields,
       text,
     });
@@ -489,6 +490,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               link: similar.url,
             },
             actions: similarDisplayActions,
+            actionButtonsAlignment: MessageActionButtonsAlignment.HORIZONTAL,
             thumbnailUrl: similar.thumbUrl,
             text: 'Similar to *' + result.name + '* \n*Id: *' + similar.id + '\n*Slug: *' + similar.slug,
           });
@@ -523,6 +525,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               link: bundle.url,
             },
             actions: bundlesActions,
+            actionButtonsAlignment: MessageActionButtonsAlignment.HORIZONTAL,
             thumbnailUrl: bundle.thumbUrl,
             text: 'Bundle includes *' + result.name + '* \n*Id: *' + bundle.id + '\n*Slug: *' + bundle.slug,
           });
@@ -557,6 +560,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               link: expansion.url,
             },
             actions: expansionsActions,
+            actionButtonsAlignment: MessageActionButtonsAlignment.HORIZONTAL,
             thumbnailUrl: expansion.thumbUrl,
             text: 'Expansion for *' + result.name + '* \n*Id: *' + expansion.id + '\n*Slug: *' + expansion.slug,
           });
@@ -591,6 +595,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               link: dlc.url,
             },
             actions: dlcActions,
+            actionButtonsAlignment: MessageActionButtonsAlignment.HORIZONTAL,
             thumbnailUrl: dlc.thumbUrl,
             text: 'DLC for *' + result.name + '* \n*Id: *' + dlc.id + '\n*Slug: *' + dlc.slug,
           });
