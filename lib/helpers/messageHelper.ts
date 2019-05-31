@@ -1,5 +1,5 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IMessageAction, IMessageAttachment } from '@rocket.chat/apps-engine/definition/messages';
+import { IMessageAction, IMessageAttachment, MessageActionType, MessageProcessingType } from '@rocket.chat/apps-engine/definition/messages';
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import { AppPersistence } from '../persistence';
@@ -246,12 +246,19 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
 
     const fields = new Array();
 
+    // Wanted to do actions for approve/mark available, but can't pass tokens or headers, just urls...
+    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
+    const actions = new Array<IMessageAction>();
+
     // For multiple results, a search is being performed. Show the quick command to use for convenience
     if (results.length > 1) {
-      text += 'To get the full details of this item, run `/igdb game ' + result.id + '`';
-      if (result.slug) {
-        text += ' or `/igdb game ' + result.slug + '`';
-      }
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: 'View Details',
+        msg: '/igdb game ' + result.id,
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
     }
 
     prepMetaDisplay(result, fields, 'id', 'Id', { url: false });
@@ -273,13 +280,13 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
     prepMetaDisplay(result, fields, 'platformsDisplay', 'Platforms', { short: false, list: true });
     prepMetaDisplay(result, fields, 'keywordsDisplay', 'Keywords', { url: false, short: false });
 
-    if (result.rating && result.rating_count) {
-      let ratingText = '\n*Rating: *' + result.rating + ' _(of ' + result.rating_count + ')_ ';
-      if (result.aggregated_rating && result.aggregated_rating_count) {
-        ratingText += '*Aggregate: *' + result.aggregated_rating + ' _(of ' + result.aggregated_rating_count + ')_ ';
+    if (result.rating && !isNaN(result.rating) && result.rating_count && !isNaN(result.rating_count)) {
+      let ratingText = '\n*Rating: *' + Number(result.rating).toFixed(1) + ' _(of ' + Number(result.rating_count) + ')_ ';
+      if (result.aggregated_rating && !isNaN(result.aggregated_rating) && result.aggregated_rating_count && !isNaN(result.aggregated_rating_count)) {
+        ratingText += '*Aggregate: *' + Number(result.aggregated_rating).toFixed(1) + ' _(of ' + Number(result.aggregated_rating_count) + ')_ ';
       }
-      if (result.total_rating && result.total_rating_count) {
-        ratingText += '*Total: *' + result.total_rating + ' _(of ' + result.total_rating_count + ')_ ';
+      if (result.total_rating && !isNaN(result.total_rating) && result.total_rating_count && !isNaN(result.total_rating_count)) {
+        ratingText += '*Total: *' + Number(result.total_rating).toFixed(1) + ' _(of ' + Number(result.total_rating_count) + ')_ ';
       }
       text += ratingText;
     }
@@ -297,74 +304,82 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
     }
 
     if (!options || !options.simple) {
-      text += '\n*Similar Games: *';
       if (result.similar_games && Array.isArray(result.similar_games)) {
-        text += result.similar_games.length;
-        if (result.similar_games.length > 0) {
-          text += ' _(to see results, run `/igdb game ' + result.id + ' similar` or `/igdb game ' + result.slug + ' similar`)_';
-        }
-      } else {
-        text += '0';
+        actions.push({
+          type: MessageActionType.BUTTON,
+          text: 'View Similar Games (' + result.similar_games.length + ')',
+          msg: '/igdb game ' + result.id + ' similar',
+          msg_in_chat_window: true,
+          msg_processing_type: MessageProcessingType.RespondWithMessage,
+        });
       }
 
-      text += '\n*Bundles: *';
       if (result.bundles && Array.isArray(result.bundles)) {
-        text += result.bundles.length;
-        if (result.bundles.length > 0) {
-          text += ' _(to see results, run `/igdb game ' + result.id + ' bundles` or `/igdb game ' + result.slug + ' bundles`)_';
-        }
-      } else {
-        text += '0';
+        actions.push({
+          type: MessageActionType.BUTTON,
+          text: 'View Bundles (' + result.bundles.length + ')',
+          msg: '/igdb game ' + result.id + ' bundles',
+          msg_in_chat_window: true,
+          msg_processing_type: MessageProcessingType.RespondWithMessage,
+        });
       }
 
-      text += '\n*Expansions: *';
       if (result.expansions && Array.isArray(result.expansions)) {
-        text += result.expansions.length;
-        if (result.expansions.length > 0) {
-          text += ' _(to see results, run `/igdb game ' + result.id + ' expansions` or `/igdb game ' + result.slug + ' expansions`)_';
-        }
-      } else {
-        text += '0';
+        actions.push({
+          type: MessageActionType.BUTTON,
+          text: 'View Expansions (' + result.expansions.length + ')',
+          msg: '/igdb game ' + result.id + ' expansions',
+          msg_in_chat_window: true,
+          msg_processing_type: MessageProcessingType.RespondWithMessage,
+        });
       }
 
-      text += '\n*DLCs: *';
       if (result.dlc && Array.isArray(result.dlc)) {
-        text += result.dlc.length;
-        if (result.dlc.length > 0) {
-          text += ' _(to see results, run `/igdb game ' + result.id + ' dlc` or `/igdb game ' + result.slug + ' dlc`)_';
-        }
-      } else {
-        text += '0';
+        actions.push({
+          type: MessageActionType.BUTTON,
+          text: 'View DLC (' + result.dlc.length + ')',
+          msg: '/igdb game ' + result.id + ' dlc',
+          msg_in_chat_window: true,
+          msg_processing_type: MessageProcessingType.RespondWithMessage,
+        });
       }
 
-      if (result.feedsDisplay) {
-        text += '\n*Feeds: *';
-        if (result.feedsDisplay && Array.isArray(result.feedsDisplay)) {
-          text += result.feedsDisplay.length;
-          if (result.feedsDisplay.length > 0) {
-            text += ' _(to see results, run `/igdb game ' + result.id + ' feeds` or `/igdb game ' + result.slug + ' feeds`)_';
-          }
-        } else {
-          text += '0';
-        }
+      if (result.feedsDisplay && Array.isArray(result.feedsDisplay)) {
+        actions.push({
+          type: MessageActionType.BUTTON,
+          text: 'View Feeds (' + result.feedsDisplay.length + ')',
+          msg: '/igdb game ' + result.id + ' feeds',
+          msg_in_chat_window: true,
+          msg_processing_type: MessageProcessingType.RespondWithMessage,
+        });
       }
 
-      if (result.pulsesDisplay) {
-        text += '\n*Pulses: *';
-        if (result.pulsesDisplay && Array.isArray(result.pulsesDisplay)) {
-          text += result.pulsesDisplay.length;
-          if (result.pulsesDisplay.length > 0) {
-            text += ' _(to see results, run `/igdb game ' + result.id + ' pulses` or `/igdb game ' + result.slug + ' pulses`)_';
-          }
-        } else {
-          text += '0';
-        }
+      if (result.pulsesDisplay && Array.isArray(result.pulsesDisplay)) {
+        actions.push({
+          type: MessageActionType.BUTTON,
+          text: 'View Pulses (' + result.pulsesDisplay.length + ')',
+          msg: '/igdb game ' + result.id + ' pulses',
+          msg_in_chat_window: true,
+          msg_processing_type: MessageProcessingType.RespondWithMessage,
+        });
       }
     }
 
     // If only one result, show other commands
     if (results.length === 1) {
-      text += '\n*Other Commands: *`(artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`';
+      const otherCommands = ['artworks', 'screenshots', 'videos', 'feeds', 'pulses'];
+      // tslint:disable-next-line:prefer-for-of
+      for (let y = 0; y < otherCommands.length; y++) {
+        const display = otherCommands[y].charAt(0).toUpperCase() + otherCommands[y].slice(1);
+        actions.push({
+          type: MessageActionType.BUTTON,
+          text: 'View ' + display,
+          msg: '/igdb game ' + result.id + ' ' + otherCommands[y],
+          msg_in_chat_window: true,
+          msg_processing_type: MessageProcessingType.RespondWithMessage,
+        });
+      }
+      // text += '\n*Other Commands: *`(artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`';
     }
 
     if (result.summary) {
@@ -394,9 +409,13 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       });
     }
 
-    // Wanted to do actions for approve/mark available, but can't pass tokens or headers, just urls...
-    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
-    const actions = new Array<IMessageAction>();
+    actions.push({
+      type: MessageActionType.BUTTON,
+      url: result.url,
+      text: 'View on IGDB',
+      msg_in_chat_window: false,
+      msg_processing_type: MessageProcessingType.SendMessage,
+    });
 
     attachments.push({
       collapsed: options && options.simple === true ? true : false,
@@ -454,6 +473,14 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         });
       } else {
         result.similarDisplay.forEach((similar) => {
+          const similarDisplayActions = new Array<IMessageAction>();
+          similarDisplayActions.push({
+            type: MessageActionType.BUTTON,
+            text: 'View Details',
+            msg: '/igdb game ' + similar.id,
+            msg_in_chat_window: true,
+            msg_processing_type: MessageProcessingType.RespondWithMessage,
+          });
           attachments.push({
             collapsed: false,
             color: '##3eb87a',
@@ -461,9 +488,9 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               value: similar.name,
               link: similar.url,
             },
+            actions: similarDisplayActions,
             thumbnailUrl: similar.thumbUrl,
-            text: 'Similar to *' + result.name + '* \n*Id: *' + similar.id + '\n*Slug: *' + similar.slug
-              + '\n\nTo view details, run `/igdb game ' + similar.id + '` or `/igdb game ' + similar.slug + '`',
+            text: 'Similar to *' + result.name + '* \n*Id: *' + similar.id + '\n*Slug: *' + similar.slug,
           });
         });
       }
@@ -480,6 +507,14 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         });
       } else {
         result.bundlesDisplay.forEach((bundle) => {
+          const bundlesActions = new Array<IMessageAction>();
+          bundlesActions.push({
+            type: MessageActionType.BUTTON,
+            text: 'View Details',
+            msg: '/igdb game ' + bundle.id,
+            msg_in_chat_window: true,
+            msg_processing_type: MessageProcessingType.RespondWithMessage,
+          });
           attachments.push({
             collapsed: false,
             color: '##3eb87a',
@@ -487,9 +522,9 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               value: bundle.name,
               link: bundle.url,
             },
+            actions: bundlesActions,
             thumbnailUrl: bundle.thumbUrl,
-            text: 'Bundle includes *' + result.name + '* \n*Id: *' + bundle.id + '\n*Slug: *' + bundle.slug
-            + '\n\nTo view details, run `/igdb game ' + bundle.id + '` or `/igdb game ' + bundle.slug + '`',
+            text: 'Bundle includes *' + result.name + '* \n*Id: *' + bundle.id + '\n*Slug: *' + bundle.slug,
           });
         });
       }
@@ -506,6 +541,14 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         });
       } else {
         result.expansionsDisplay.forEach((expansion) => {
+          const expansionsActions = new Array<IMessageAction>();
+          expansionsActions.push({
+            type: MessageActionType.BUTTON,
+            text: 'View Details',
+            msg: '/igdb game ' + expansion.id,
+            msg_in_chat_window: true,
+            msg_processing_type: MessageProcessingType.RespondWithMessage,
+          });
           attachments.push({
             collapsed: false,
             color: '##3eb87a',
@@ -513,9 +556,9 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               value: expansion.name,
               link: expansion.url,
             },
+            actions: expansionsActions,
             thumbnailUrl: expansion.thumbUrl,
-            text: 'Expansion for *' + result.name + '* \n*Id: *' + expansion.id + '\n*Slug: *' + expansion.slug
-            + '\n\nTo view details, run `/igdb game ' + expansion.id + '` or `/igdb game ' + expansion.slug + '`',
+            text: 'Expansion for *' + result.name + '* \n*Id: *' + expansion.id + '\n*Slug: *' + expansion.slug,
           });
         });
       }
@@ -532,6 +575,14 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         });
       } else {
         result.dlcsDisplay.forEach((dlc) => {
+          const dlcActions = new Array<IMessageAction>();
+          dlcActions.push({
+            type: MessageActionType.BUTTON,
+            text: 'View Details',
+            msg: '/igdb game ' + dlc.id,
+            msg_in_chat_window: true,
+            msg_processing_type: MessageProcessingType.RespondWithMessage,
+          });
           attachments.push({
             collapsed: false,
             color: '##3eb87a',
@@ -539,9 +590,9 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
               value: dlc.name,
               link: dlc.url,
             },
+            actions: dlcActions,
             thumbnailUrl: dlc.thumbUrl,
-            text: 'DLC for *' + result.name + '* \n*Id: *' + dlc.id + '\n*Slug: *' + dlc.slug
-            + '\n\nTo view details, run `/igdb game ' + dlc.id + '` or `/igdb game ' + dlc.slug + '`',
+            text: 'DLC for *' + result.name + '* \n*Id: *' + dlc.id + '\n*Slug: *' + dlc.slug,
           });
         });
       }
