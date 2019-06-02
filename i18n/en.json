@@ -6,5 +6,9 @@
   "customize_key": "Set API Key",
   "customize_key_description": "Obtain an API Key from https://api.igdb.com",
   "slashcommand_params": "help",
-  "slashcommand_description": "Shows all IGDB App commands"
+  "slashcommand_description": "Shows all IGDB App commands",
+  "slashcommand_games_params": "[QUERY]",
+  "slashcommand_games_description": "Search for games",
+  "slashcommand_game_params": "[ID|SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)",
+  "slashcommand_game_description": "Get details for a game. Second parameter is for sub-details."
 }

@@ -255,7 +255,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
       actions.push({
         type: MessageActionType.BUTTON,
         text: 'Get Details',
-        msg: '/igdb game ' + result.id,
+        msg: '/igdb-game ' + result.id,
         msg_in_chat_window: true,
         msg_processing_type: MessageProcessingType.RespondWithMessage,
       });
@@ -308,7 +308,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         actions.push({
           type: MessageActionType.BUTTON,
           text: 'Get Similar Games (' + result.similar_games.length + ')',
-          msg: '/igdb game ' + result.id + ' similar',
+          msg: '/igdb-game ' + result.id + ' similar',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
         });
@@ -318,7 +318,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         actions.push({
           type: MessageActionType.BUTTON,
           text: 'Get Bundles (' + result.bundles.length + ')',
-          msg: '/igdb game ' + result.id + ' bundles',
+          msg: '/igdb-game ' + result.id + ' bundles',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
         });
@@ -328,7 +328,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         actions.push({
           type: MessageActionType.BUTTON,
           text: 'Get Expansions (' + result.expansions.length + ')',
-          msg: '/igdb game ' + result.id + ' expansions',
+          msg: '/igdb-game ' + result.id + ' expansions',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
         });
@@ -338,7 +338,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         actions.push({
           type: MessageActionType.BUTTON,
           text: 'Get DLC (' + result.dlc.length + ')',
-          msg: '/igdb game ' + result.id + ' dlc',
+          msg: '/igdb-game ' + result.id + ' dlc',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
         });
@@ -348,7 +348,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         actions.push({
           type: MessageActionType.BUTTON,
           text: 'Get Feeds (' + result.feedsDisplay.length + ')',
-          msg: '/igdb game ' + result.id + ' feeds',
+          msg: '/igdb-game ' + result.id + ' feeds',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
         });
@@ -358,7 +358,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         actions.push({
           type: MessageActionType.BUTTON,
           text: 'Get Pulses (' + result.pulsesDisplay.length + ')',
-          msg: '/igdb game ' + result.id + ' pulses',
+          msg: '/igdb-game ' + result.id + ' pulses',
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
         });
@@ -374,7 +374,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
         actions.push({
           type: MessageActionType.BUTTON,
           text: 'Get ' + display,
-          msg: '/igdb game ' + result.id + ' ' + otherCommands[y],
+          msg: '/igdb-game ' + result.id + ' ' + otherCommands[y],
           msg_in_chat_window: true,
           msg_processing_type: MessageProcessingType.RespondWithMessage,
         });
@@ -478,7 +478,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
           similarDisplayActions.push({
             type: MessageActionType.BUTTON,
             text: 'View Details',
-            msg: '/igdb game ' + similar.id,
+            msg: '/igdb-game ' + similar.id,
             msg_in_chat_window: true,
             msg_processing_type: MessageProcessingType.RespondWithMessage,
           });
@@ -513,7 +513,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
           bundlesActions.push({
             type: MessageActionType.BUTTON,
             text: 'Get Details',
-            msg: '/igdb game ' + bundle.id,
+            msg: '/igdb-game ' + bundle.id,
             msg_in_chat_window: true,
             msg_processing_type: MessageProcessingType.RespondWithMessage,
           });
@@ -548,7 +548,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
           expansionsActions.push({
             type: MessageActionType.BUTTON,
             text: 'Get Details',
-            msg: '/igdb game ' + expansion.id,
+            msg: '/igdb-game ' + expansion.id,
             msg_in_chat_window: true,
             msg_processing_type: MessageProcessingType.RespondWithMessage,
           });
@@ -583,7 +583,7 @@ export async function sendGamesResults(results, options, read: IRead, modify: IM
           dlcActions.push({
             type: MessageActionType.BUTTON,
             text: 'Get Details',
-            msg: '/igdb game ' + dlc.id,
+            msg: '/igdb-game ' + dlc.id,
             msg_in_chat_window: true,
             msg_processing_type: MessageProcessingType.RespondWithMessage,
           });
