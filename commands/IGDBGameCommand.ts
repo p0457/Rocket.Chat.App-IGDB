@@ -1,7 +1,5 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
-import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import { IGDBApp } from '../IGDBApp';
 import * as msgHelper from '../lib/helpers/messageHelper';
 import { getGames } from '../lib/helpers/request';
@@ -23,7 +21,7 @@ export class IGDBGameCommand implements ISlashCommand {
 
     const [id, scope] = context.getArguments();
     if (!id) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom());
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Id not provided!');
       return;
     }
 
@@ -86,7 +84,7 @@ export class IGDBGameCommand implements ISlashCommand {
         }, http, read, modify, context.getSender(), context.getRoom());
       } else {
         // tslint:disable-next-line:max-line-length
-        await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Didn\'t understand your second argument `' + scopeTemp + '`');
+        await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Didn\'t understand your second argument `' + scopeTemp + '`');
         return;
       }
     } else {
@@ -108,11 +106,5 @@ export class IGDBGameCommand implements ISlashCommand {
         getTimeToBeat: true,
       }, http, read, modify, context.getSender(), context.getRoom());
     }
-  }
-
-  private async sendUsage(read: IRead, modify: IModify, user: IUser, room: IRoom, additionalText?) {
-    // tslint:disable-next-line:max-line-length
-    await msgHelper.sendNotification(additionalText ? additionalText + '\n' : '' + 'Usage: ``/igdb-game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`', read, modify, user, room);
-    return;
   }
 }

@@ -10,5 +10,5 @@
   "slashcommand_games_params": "[QUERY]",
   "slashcommand_games_description": "Search for games",
   "slashcommand_game_params": "[ID|SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)",
-  "slashcommand_game_description": "Get details for a game. Second parameter is for sub-details."
+  "slashcommand_game_description": "Get details for a game (second parameter is for sub-details"
 }

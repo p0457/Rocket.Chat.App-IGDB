@@ -2,6 +2,7 @@ import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/de
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
 import { IGDBApp } from '../IGDBApp';
 import * as msgHelper from '../lib/helpers/messageHelper';
+import usage from '../lib/helpers/usage';
 
 export class IGDBCommand implements ISlashCommand {
   public command = 'igdb';
@@ -12,16 +13,23 @@ export class IGDBCommand implements ISlashCommand {
   public constructor(private readonly app: IGDBApp) {}
 
   public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
+    let text = '';
+
+    for (const p in usage) {
+      if (usage.hasOwnProperty(p)) {
+        if (usage[p].command && usage[p].usage && usage[p].description) {
+          text += usage[p].usage + '\n>' + usage[p].description + '\n';
+        }
+      }
+    }
+
     await msgHelper.sendNotificationSingleAttachment({
       collapsed: false,
       color: '#e4a00e',
       title: {
         value: 'Commands',
       },
-      text: '`/igdb`\n>Show this help menu\n'
-        + '`/igdb-games [QUERY]`\n>Search for games\n'
-        // tslint:disable-next-line:max-line-length
-        + '`/igdb-game [ID OR SLUG] (artworks|bundles|expansions|screenshots|similar|dlc|videos|feeds|pulses)`\n>Get details for a game. Second parameter is for sub-details',
+      text,
       }, read, modify, context.getSender(), context.getRoom());
     return;
   }

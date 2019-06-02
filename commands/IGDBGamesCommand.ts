@@ -1,10 +1,8 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
-import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import { IGDBApp } from '../IGDBApp';
 import * as msgHelper from '../lib/helpers/messageHelper';
-import { getGames, setRequest } from '../lib/helpers/request';
+import { getGames } from '../lib/helpers/request';
 
 export class IGDBGamesCommand implements ISlashCommand {
   public command = 'igdb-games';
@@ -23,18 +21,18 @@ export class IGDBGamesCommand implements ISlashCommand {
 
     const args = context.getArguments();
     if (args.length === 0) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom());
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'No arguments provided!');
       return;
     }
     const searchArg = args.join(' ').trim();
 
     if (searchArg === '') {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom());
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'No query provided!');
       return;
     }
 
     if (searchArg.length < 3) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Search Query must be greater than 3 letters!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Search Query must be greater than 3 letters!');
       return;
     }
 
@@ -45,10 +43,5 @@ export class IGDBGamesCommand implements ISlashCommand {
       resultsText: 'Results for query "' + searchArg + '"',
       getCovers: true,
     }, http, read, modify, context.getSender(), context.getRoom());
-  }
-
-  private async sendUsage(read: IRead, modify: IModify, user: IUser, room: IRoom, additionalText?) {
-    await msgHelper.sendNotification(additionalText ? additionalText + '\n' : '' + 'Usage: `/igdb-games [QUERY]`', read, modify, user, room);
-    return;
   }
 }
