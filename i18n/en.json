@@ -5,7 +5,7 @@
   "customize_icon_description": "Choose the icon that is used for messages from this app.",
   "customize_key": "Set API Key",
   "customize_key_description": "Obtain an API Key from https://api.igdb.com",
-  "slashcommand_params": "help",
+  "slashcommand_params": "",
   "slashcommand_description": "Shows all IGDB App commands",
   "slashcommand_games_params": "[QUERY]",
   "slashcommand_games_description": "Search for games",
