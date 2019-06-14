@@ -23,6 +23,8 @@ export class IGDBCommand implements ISlashCommand {
       }
     }
 
+    text += '\n\nThis application is not created by, affiliated with, or supported by IGDB.';
+
     await msgHelper.sendNotificationSingleAttachment({
       collapsed: false,
       color: '#e4a00e',
