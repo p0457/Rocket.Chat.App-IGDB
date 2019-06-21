@@ -2,7 +2,7 @@ import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/de
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
 import { IGDBApp } from '../IGDBApp';
 import * as msgHelper from '../lib/helpers/messageHelper';
-import { getGames } from '../lib/helpers/request';
+import { getAndSendGames } from '../lib/helpers/request';
 
 export class IGDBGameCommand implements ISlashCommand {
   public command = 'igdb-game';
@@ -38,47 +38,47 @@ export class IGDBGameCommand implements ISlashCommand {
     if (scope) {
       const scopeTemp = scope.toLowerCase().trim();
       if (scopeTemp === 'artworks') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getArtworks: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'bundles') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getBundles: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'expansions') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getExpansions: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'screenshots') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getScreenshots: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'similar') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getSimilar: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'videos') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getVideos: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'dlc') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getDlcs: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'feeds') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getFeeds: true,
         }, http, read, modify, context.getSender(), context.getRoom());
       } else if (scopeTemp === 'pulses') {
-        await getGames(key, query, {
+        await getAndSendGames(key, query, {
           getCovers,
           getPulses: true,
         }, http, read, modify, context.getSender(), context.getRoom());
@@ -88,7 +88,7 @@ export class IGDBGameCommand implements ISlashCommand {
         return;
       }
     } else {
-      await getGames(key, query, {
+      await getAndSendGames(key, query, {
         getCovers,
         getPlatforms: true,
         getGenres: true,

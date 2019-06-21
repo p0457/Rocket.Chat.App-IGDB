@@ -2,7 +2,7 @@ import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/de
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
 import { IGDBApp } from '../IGDBApp';
 import * as msgHelper from '../lib/helpers/messageHelper';
-import { getGames } from '../lib/helpers/request';
+import { getAndSendGames } from '../lib/helpers/request';
 
 export class IGDBGamesCommand implements ISlashCommand {
   public command = 'igdb-games';
@@ -38,7 +38,7 @@ export class IGDBGamesCommand implements ISlashCommand {
 
     const query = 'search "' + searchArg + '";fields name,slug,summary,url;where version_parent = null;limit 50;';
 
-    await getGames(key, query, {
+    await getAndSendGames(key, query, {
       simple: true,
       resultsText: 'Results for query "' + searchArg + '"',
       getCovers: true,

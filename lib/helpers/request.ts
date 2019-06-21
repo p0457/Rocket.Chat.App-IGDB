@@ -2,6 +2,7 @@ import { IHttp, IModify, IRead } from '@rocket.chat/apps-engine/definition/acces
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import { sendBadApiKey, sendGamesResults, sendNotification, sendNotificationSingleAttachment } from './messageHelper';
+import { IGDBGamesDTO } from '../IGDBGamesDTO';
 
 export function setRequest(key, query) {
   return {
@@ -155,25 +156,21 @@ export async function getRelatedGames(searchResults, searchResultField: string, 
   }
 }
 
-export async function getGames(key: string, query: string, options, http: IHttp, read: IRead, modify: IModify, user: IUser, room: IRoom) {
+export async function getGames(key: string, query: string, options, http: IHttp, read: IRead, modify: IModify, user: IUser, room: IRoom): Promise<IGDBGamesDTO> {
+  const result = new IGDBGamesDTO();
+  
   const url = 'https://api-v3.igdb.com/games';
 
   const response = await http.post(url, setRequest(key, query));
 
   if (!response || !response.content || response.statusCode === 500) {
-    await sendNotificationSingleAttachment({
-      collapsed: false,
-      color: '#e10000',
-      title: {
-        value: 'Failed to get a response!',
-      },
-      text: 'Please try again.',
-    }, read, modify, user, room);
+    result.error = 'Failed to get a valid response!';
+    return result;
   }
 
   if (response.statusCode === 401) {
-    await sendBadApiKey(read, modify, user, room);
-    return;
+    result.error = '401';
+    return result;
   }
 
   try {
@@ -756,22 +753,35 @@ export async function getGames(key: string, query: string, options, http: IHttp,
           }
         }
       }
-      await sendGamesResults(searchResults, {
-        simple: options.simple,
-        resultsText: options.resultsText,
-      }, read, modify, user, room);
+      result.games = searchResults;
+      return result;
     } else {
-      await sendNotification('No results!', read, modify, user, room);
+      result.error = 'No results!';
+      return result;
     }
   } catch (e) {
-    console.log('Failed to parse response.', e);
-    await sendNotificationSingleAttachment({
-      collapsed: false,
-      color: '#e10000',
-      title: {
-        value: 'Failed to parse response!',
-      },
-      text: 'Please try again.',
-    }, read, modify, user, room);
+    console.log('Failed to parse response!', e);
+    result.error = 'Failed to parse response!';
+    return result;
   }
+}
+
+export async function getAndSendGames(key: string, query: string, options, http: IHttp, read: IRead, modify: IModify, user: IUser, room: IRoom) {
+  const gamesResult = await this.getGames(key, query, options, http, read, modify, user, room);
+
+  if (gamesResult.hasError()) {
+    if (gamesResult.error = '401') {
+      await sendBadApiKey(read, modify, user, room);
+      return;
+    }
+
+    await sendNotification(gamesResult.error, read, modify, user, room);
+    return;
+  }
+  
+  await sendGamesResults(gamesResult.games, {
+    simple: options.simple,
+    resultsText: options.resultsText,
+  }, read, modify, user, room);
+  return;
 }
