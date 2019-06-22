@@ -47,9 +47,20 @@ export class IGDBGameCommand implements ISlashCommand {
     const args = context.getArguments();
     if (args.length > 1) {
       if (options.includes(args[1].toLowerCase())) {
+        const option = args[1];
+        items.push({
+          id: option.toLowerCase(),
+          type: SlashCommandPreviewItemType.TEXT,
+          value: option === 'dlc' ? 'DLC' : (`${option.charAt(0).toUpperCase()}${option.substring(1, option.length)}`),
+        });
+        items.push({
+          id: 'details',
+          type: SlashCommandPreviewItemType.TEXT,
+          value: 'Details',
+        });
         return {
-          i18nTitle: 'No Results!',
-          items, 
+          i18nTitle: 'Results for',
+          items,
         };
       }
     }
