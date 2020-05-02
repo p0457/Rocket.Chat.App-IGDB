@@ -9,4 +9,9 @@ export default {
     usage: '`/igdb-games [QUERY]`',
     description: 'Search for games',
   },
+  gameSearch: {
+    command: 'igdb-game-search',
+    usage: '`/igdb-game-search [QUERY]`',
+    description: 'Search for games using poster previews',
+  },
 };

@@ -1,110 +1,91 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
+import { ISlashCommand, SlashCommandContext, ISlashCommandPreview, ISlashCommandPreviewItem, SlashCommandPreviewItemType } from '@rocket.chat/apps-engine/definition/slashcommands';
 import { IGDBApp } from '../IGDBApp';
 import * as msgHelper from '../lib/helpers/messageHelper';
-import { getGames } from '../lib/helpers/request';
+import { getAndSendGames, getGamesForPreview, getGameSearchString, sendGame } from '../lib/helpers/request';
+import { IUser } from '@rocket.chat/apps-engine/definition/users';
+import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 
 export class IGDBGameCommand implements ISlashCommand {
   public command = 'igdb-game';
   public i18nParamsExample = 'slashcommand_game_params';
   public i18nDescription = 'slashcommand_game_description';
-  public providesPreview = false;
+  public providesPreview = true;
 
   public constructor(private readonly app: IGDBApp) {}
 
   public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
+    await sendGame(context.getArguments(), read, modify, http, context.getSender(), context.getRoom(), false);
+    return;
+  }
+
+  public async previewer(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<ISlashCommandPreview> {
+    const items = new Array<ISlashCommandPreviewItem>();
+    
     const key = await read.getEnvironmentReader().getSettings().getValueById('igdb_key');
+    
     if (!key) {
-      await msgHelper.sendBadApiKey(read, modify, context.getSender(), context.getRoom());
-      return;
+      return {
+        i18nTitle: 'Set API Key first!',
+        items,
+      };
     }
 
-    const [id, scope] = context.getArguments();
-    if (!id) {
-      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Id not provided!');
-      return;
-    }
+    const options = [
+      'details',
+      'artworks',
+      'bundles',
+      'expansions',
+      'screenshots',
+      'similar',
+      'dlc',
+      'videos',
+      'feeds',
+      'pulses',
+    ]
 
-    let query = 'fields *;where ';
-
-    // tslint:disable-next-line:radix
-    if (isNaN(parseInt(id))) {
-      query += 'slug="' + id + '";';
-    } else {
-      query += 'id=' + id + ';';
-    }
-
-    const getCovers = true;
-    if (scope) {
-      const scopeTemp = scope.toLowerCase().trim();
-      if (scopeTemp === 'artworks') {
-        await getGames(key, query, {
-          getCovers,
-          getArtworks: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'bundles') {
-        await getGames(key, query, {
-          getCovers,
-          getBundles: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'expansions') {
-        await getGames(key, query, {
-          getCovers,
-          getExpansions: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'screenshots') {
-        await getGames(key, query, {
-          getCovers,
-          getScreenshots: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'similar') {
-        await getGames(key, query, {
-          getCovers,
-          getSimilar: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'videos') {
-        await getGames(key, query, {
-          getCovers,
-          getVideos: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'dlc') {
-        await getGames(key, query, {
-          getCovers,
-          getDlcs: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'feeds') {
-        await getGames(key, query, {
-          getCovers,
-          getFeeds: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else if (scopeTemp === 'pulses') {
-        await getGames(key, query, {
-          getCovers,
-          getPulses: true,
-        }, http, read, modify, context.getSender(), context.getRoom());
-      } else {
-        // tslint:disable-next-line:max-line-length
-        await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Didn\'t understand your second argument `' + scopeTemp + '`');
-        return;
+    const args = context.getArguments();
+    if (args.length > 1) {
+      if (options.includes(args[1].toLowerCase())) {
+        const option = args[1];
+        items.push({
+          id: option.toLowerCase(),
+          type: SlashCommandPreviewItemType.TEXT,
+          value: option === 'dlc' ? 'DLC' : (`${option.charAt(0).toUpperCase()}${option.substring(1, option.length)}`),
+        });
+        items.push({
+          id: 'details',
+          type: SlashCommandPreviewItemType.TEXT,
+          value: 'Details',
+        });
+        return {
+          i18nTitle: 'Results for',
+          items,
+        };
       }
-    } else {
-      await getGames(key, query, {
-        getCovers,
-        getPlatforms: true,
-        getGenres: true,
-        getGameModes: true,
-        getCompanies: true,
-        getGameEngines: true,
-        getPlayerPerspectives: true,
-        getThemes: true,
-        getWebsites: true,
-        getFranchises: true,
-        getAlternativeNames: true,
-        getReleaseDates: true,
-        getKeywords: true,
-        getMultiplayerModes: true,
-        getTimeToBeat: true,
-      }, http, read, modify, context.getSender(), context.getRoom());
     }
+
+    options.forEach((option) => {
+      items.push({
+        id: option,
+        type: SlashCommandPreviewItemType.TEXT,
+        value: option === 'dlc' ? 'DLC' : (`${option.charAt(0).toUpperCase()}${option.substring(1, option.length)}`),
+      });
+    })
+
+    return {
+      i18nTitle: 'Results for',
+      items,
+    };
+  }
+
+  public async executePreviewItem(item: ISlashCommandPreviewItem, context: SlashCommandContext, read: IRead,
+    modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
+      const args = [context.getArguments()[0]];
+      if (item.id !== 'details') {
+        args.push(item.id);
+      }
+      await sendGame(args, read, modify, http, context.getSender(), context.getRoom(), false);
+      return;
   }
 }

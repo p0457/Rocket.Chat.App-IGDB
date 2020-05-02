@@ -2,6 +2,8 @@ import { IHttp, IModify, IRead } from '@rocket.chat/apps-engine/definition/acces
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import { sendBadApiKey, sendGamesResults, sendNotification, sendNotificationSingleAttachment } from './messageHelper';
+import { IGDBGamesDTO } from '../IGDBGamesDTO';
+import * as msgHelper from './messageHelper';
 
 export function setRequest(key, query) {
   return {
@@ -12,6 +14,111 @@ export function setRequest(key, query) {
     },
     content: query,
   };
+}
+
+export async function sendGame(args: string[], read: IRead, modify: IModify, http: IHttp, user: IUser, room: IRoom, isSearch: boolean): Promise<void> {
+  const key = await read.getEnvironmentReader().getSettings().getValueById('igdb_key');
+  
+  if (!key) {
+    await msgHelper.sendBadApiKey(read, modify, user, room);
+    return;
+  }
+
+  const [idOrQuery, scope] = args;
+  if (!idOrQuery) {
+    await msgHelper.sendUsage(read, modify, user, room, this.command, 'Id or Query not provided!');
+    return;
+  }
+
+  let query = '';
+  if (isSearch) {
+    query = getGameSearchString(idOrQuery);
+  } else {
+    query = 'fields *;where ';
+    // tslint:disable-next-line:radix
+    if (isNaN(parseInt(idOrQuery))) {
+      query += 'slug="' + idOrQuery + '";';
+    } else {
+      query += 'id=' + idOrQuery + ';';
+    }
+  }
+
+  const getCovers = true;
+  if (scope) {
+    const scopeTemp = scope.toLowerCase().trim();
+    if (scopeTemp === 'artworks') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getArtworks: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'bundles') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getBundles: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'expansions') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getExpansions: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'screenshots') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getScreenshots: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'similar') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getSimilar: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'videos') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getVideos: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'dlc') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getDlcs: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'feeds') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getFeeds: true,
+      }, http, read, modify, user, room);
+    } else if (scopeTemp === 'pulses') {
+      await getAndSendGames(key, query, {
+        getCovers,
+        getPulses: true,
+      }, http, read, modify, user, room);
+    } else {
+      // tslint:disable-next-line:max-line-length
+      await msgHelper.sendUsage(read, modify, user, room, this.command, 'Didn\'t understand your second argument `' + scopeTemp + '`');
+      return;
+    }
+  } else {
+    await getAndSendGames(key, query, {
+      getCovers,
+      getPlatforms: true,
+      getGenres: true,
+      getGameModes: true,
+      getCompanies: true,
+      getGameEngines: true,
+      getPlayerPerspectives: true,
+      getThemes: true,
+      getWebsites: true,
+      getFranchises: true,
+      getAlternativeNames: true,
+      getReleaseDates: true,
+      getKeywords: true,
+      getMultiplayerModes: true,
+      getTimeToBeat: true,
+    }, http, read, modify, user, room);
+  }
+}
+
+export function getGameSearchString(gameQuery) {
+  return `search "${gameQuery}";fields name,slug,summary,url;where version_parent = null;limit 50;`;
 }
 
 export async function getMetadata(searchResults, key: string, scope: string, resultField: string, resultProperty: string, http: IHttp, fieldsOverride?, filterOverride?) {
@@ -155,34 +262,32 @@ export async function getRelatedGames(searchResults, searchResultField: string, 
   }
 }
 
-export async function getGames(key: string, query: string, options, http: IHttp, read: IRead, modify: IModify, user: IUser, room: IRoom) {
+export async function getGames(key: string, query: string, options, http: IHttp): Promise<IGDBGamesDTO> {
+  const result = new IGDBGamesDTO();
+  
   const url = 'https://api-v3.igdb.com/games';
 
   const response = await http.post(url, setRequest(key, query));
 
-  if (!response || !response.content || response.statusCode === 500) {
-    await sendNotificationSingleAttachment({
-      collapsed: false,
-      color: '#e10000',
-      title: {
-        value: 'Failed to get a response!',
-      },
-      text: 'Please try again.',
-    }, read, modify, user, room);
+  if (!response || !response.content || response.statusCode === 500 || response.statusCode === 400) {
+    result.error = 'Failed to get a valid response!';
+    return result;
   }
 
   if (response.statusCode === 401) {
-    await sendBadApiKey(read, modify, user, room);
-    return;
+    result.error = '401';
+    return result;
   }
 
   try {
     const searchResults = JSON.parse(response.content || '');
     if (Array.isArray(searchResults) && searchResults.length > 0) {
       const ids = searchResults.map((searchResult) => {
-        return searchResult.id;
+        if (searchResult.id) {
+          return searchResult.id;
+        }
       });
-      if (options) {
+      if (options && ids.length > 0) {
         // COVERS
         if (options.getCovers) {
           try {
@@ -756,22 +861,43 @@ export async function getGames(key: string, query: string, options, http: IHttp,
           }
         }
       }
-      await sendGamesResults(searchResults, {
-        simple: options.simple,
-        resultsText: options.resultsText,
-      }, read, modify, user, room);
+      result.games = searchResults;
+      return result;
     } else {
-      await sendNotification('No results!', read, modify, user, room);
+      result.error = 'No results!';
+      return result;
     }
   } catch (e) {
-    console.log('Failed to parse response.', e);
-    await sendNotificationSingleAttachment({
-      collapsed: false,
-      color: '#e10000',
-      title: {
-        value: 'Failed to parse response!',
-      },
-      text: 'Please try again.',
-    }, read, modify, user, room);
+    console.log('Failed to parse response!', e);
+    result.error = 'Failed to parse response!';
+    return result;
   }
+}
+
+export async function getGamesForPreview(key: string, query: string, http: IHttp): Promise<IGDBGamesDTO> {
+  const options = {
+    getCovers: true,
+  };
+  const gamesResult = await getGames(key, query, options, http);
+  return gamesResult;
+}
+
+export async function getAndSendGames(key: string, query: string, options, http: IHttp, read: IRead, modify: IModify, user: IUser, room: IRoom) {
+ const gamesResult = await getGames(key, query, options, http);
+ 
+  if (gamesResult.hasError()) {
+    if (gamesResult.error === '401') {
+      await sendBadApiKey(read, modify, user, room);
+      return;
+    }
+
+    await sendNotification(gamesResult.error, read, modify, user, room);
+    return;
+  }
+  
+  await sendGamesResults(gamesResult.games, {
+    simple: options.simple,
+    resultsText: options.resultsText,
+  }, read, modify, user, room);
+  return;
 }
