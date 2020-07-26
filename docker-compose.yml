@@ -3,6 +3,6 @@
 version: '1'
 
 services:
-  rocketchatapp_jitsi:
+  rocketchatapp_igdb:
     image: rocketchatapp_igdb:latest
     container_name: rocketchatapp_igdb
