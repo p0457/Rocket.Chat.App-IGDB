@@ -1,4 +1,6 @@
-# Rocket.Chat.App-IGDB
+# Rocket.Chat.App-IGDB [CURRENTLY BROKEN]
+
+CURRENTLY BROKEN - issue with requests going to API coming back static ids 1-9
 
 Interact with the IGDB Api.
 
