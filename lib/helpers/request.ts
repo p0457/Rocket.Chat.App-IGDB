@@ -11,6 +11,7 @@ export function setRequest(key, query) {
       'user-key': key,
       'Accept': '*/*',
       'User-Agent': 'Rocket.Chat App',
+      'Content-Type': 'text/plain'
     },
     content: query,
   };
