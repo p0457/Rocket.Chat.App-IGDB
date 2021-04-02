@@ -4,6 +4,10 @@ CURRENTLY BROKEN - issue with requests going to API coming back static ids 1-9
 
 Interact with the IGDB Api.
 
+# Deprecated
+
+This project will no longer be maintained by me, I have retired my Rocket.Chat server in favor of a Matrix Synapse server.
+
 ## Configuration
 
 > Create an IGDB application at https://api-docs.igdb.com
